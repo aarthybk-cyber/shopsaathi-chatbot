@@ -1,3 +1,4 @@
 groq
 pandas
 scikit-learn
+streamlit>=1.50

@@ -1,0 +1,10 @@
+# secrets: never commit API keys
+.env
+*.key
+secrets*
+.streamlit/secrets.toml
+
+# python / notebooks
+__pycache__/
+.ipynb_checkpoints/
+.venv/
