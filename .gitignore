@@ -2,6 +2,7 @@
 .env
 *.key
 secrets*
+.streamlit/secrets.toml
 
 # python / notebooks
 __pycache__/
