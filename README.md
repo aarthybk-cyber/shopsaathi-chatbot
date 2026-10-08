@@ -13,6 +13,7 @@ Saathi is a small FAQ chatbot for a fictional Indian online store, **ShopSaathi*
 | File | Purpose |
 |---|---|
 | `app.py` | The Streamlit web app (chat interface) |
+| `.streamlit/config.toml` | App theme colour (safe to commit; never put keys here) |
 | `saathi.py` | The chatbot logic used by the app: search, hand-over rule, Groq reply |
 | `ShopSaathi_Chatbot.ipynb` | The same chatbot as a notebook (runs in Google Colab or Jupyter) |
 | `data/shopsaathi_faqs.csv` | The knowledge base: 47 FAQs, 10 categories, columns `faq_id, category, question, answer, keywords` |
@@ -79,6 +80,8 @@ shopsaathi-chatbot/
 ├── saathi.py
 ├── ShopSaathi_Chatbot.ipynb
 ├── README.md
+├── .streamlit/
+│   └── config.toml
 ├── requirements.txt
 ├── .gitignore
 └── data/
