@@ -5,7 +5,7 @@ Saathi is a small FAQ chatbot for a fictional Indian online store, **ShopSaathi*
 ## How it works
 
 1. **Find**: the customer's question is compared with every FAQ (question + keywords) using TF-IDF and cosine similarity.
-2. **Escalate**: if the best match scores below `0.12`, Saathi says it is not sure and offers a support agent. No AI call is made.
+2. **Escalate**: if the best match scores below `0.12`, Saathi does not guess. A question about shopping that the FAQs cannot answer goes to a support agent. A question that has nothing to do with shopping (weather, jokes, general knowledge) gets a friendly reply saying Saathi is a shopping assistant. Greetings and thanks get a short friendly reply. No AI call is made for any of these.
 3. **Reply**: otherwise a Groq-hosted model rewrites the matched FAQ answer in a warm tone. The prompt tells it to use *only* that FAQ text (grounding), so it does not invent facts.
 
 ## Files

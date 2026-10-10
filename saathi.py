@@ -3,6 +3,7 @@
 Steps: find the best FAQ -> escalate if the match is weak -> otherwise let a
 Groq-hosted model rewrite the FAQ answer in a warm tone, using only that text.
 """
+import random
 import re
 from dataclasses import dataclass
 
@@ -41,6 +42,56 @@ def small_talk(query: str):
     return None
 
 
+# Questions that have nothing to do with shopping get a light, honest redirect
+# instead of a hand-over to a human agent. Anything that mentions the store,
+# an order, a payment and so on is NOT off-topic and still goes to a human.
+STORE_WORDS = re.compile(
+    r"\b(order|deliver|ship|return|refund|exchang|cancel|pay|cod\b|cash|emi\b|price|cost|discount|coupon|offer|sale|"
+    r"product|item|buy|bought|purchas|sell|stock|size|warrant|invoice|gst|account|password|login|track|parcel|"
+    r"packag|gift|store|shop|checkout|cart\b|brand|fashion|cloth|shoe|phone|electronic|kitchen|beauty|customer|"
+    r"support|agent|complain|feedback|review|locat|address|office|contact|call|email|app\b|loyalty|stars?\b|member|student|card|voucher|wallet|upi|bank)"
+)
+OFF_TOPIC = [
+    ("weather", r"\b(weather|rain|raining|temperature|forecast|humid|monsoon)\b",
+     "I'm a shopping assistant, not a weather assistant! 🌦️ Your weather app will know better than me. "
+     "I'm good at orders, delivery, returns, payments and offers."),
+    ("joke", r"\b(joke|jokes|funny|make me laugh|riddle)\b",
+     "I'd tell you a joke, but I'm a shopping assistant, not a comedian. 😄 My only punchline is free delivery "
+     "above Rs.499. Ask me about orders, returns or offers!"),
+    ("news and entertainment", r"\b(cricket|ipl|football|movie|film|song|music|news|election|prime minister|president)\b",
+     "Scores, songs and headlines are outside my aisle, since I'm a shopping assistant. 🛒 "
+     "Ask me about delivery, returns, payments or offers instead."),
+]
+OFF_TOPIC_GENERIC = [
+    "That's outside my aisle! 🛒 I'm ShopSaathi's shopping assistant, so I can help with orders, delivery, "
+    "returns, payments and offers.",
+    "I'm a shopping assistant, so I'll have to pass on that one. 😊 Try asking me about delivery, returns, "
+    "payments or offers.",
+]
+
+
+def off_topic(query: str):
+    """Return (intent, reply) for questions unrelated to shopping, or None if it could be a store question."""
+    text = query.lower()
+    if STORE_WORDS.search(text):
+        return None
+    for intent, pattern, reply in OFF_TOPIC:
+        if re.search(pattern, text):
+            return intent, reply
+    return "general", random.choice(OFF_TOPIC_GENERIC)
+
+
+def no_answer(result: dict, query: str) -> dict:
+    """The FAQs cannot answer: redirect politely if it is off-topic, otherwise hand over to a human."""
+    chat = off_topic(query)
+    if chat:
+        result["off_topic"], result["reply"] = chat
+    else:
+        result["reply"] = ESCALATION
+        result["escalated"] = True
+    return result
+
+
 SYSTEM_PROMPT = """Role: You are ShopSaathi's warm and friendly customer support assistant.
 Task: Answer the customer's query using only the provided FAQ answer context.
 Rules:
@@ -71,11 +122,18 @@ def find_best_faq(index: FaqIndex, query: str):
     return index.faqs.iloc[i], float(scores[i])
 
 
+def model_declined(text: str) -> bool:
+    """True if the model's reply is the "I don't know, connecting you to an agent" message."""
+    t = text.lower().replace("\u2019", "'")
+    says_unsure = any(k in t for k in ("sorry", "not sure", "don't have", "do not have", "no information"))
+    return says_unsure and "connect you" in t and "support agent" in t
+
+
 def answer(index: FaqIndex, query: str, client=None, model=DEFAULT_MODEL, threshold=THRESHOLD) -> dict:
     """Answer one customer question.
 
     Returns a dict with: reply, faq_id, category, matched_question, raw_answer,
-    score, escalated, used_ai, error, small_talk (intent name, or None).
+    score, escalated, used_ai, error, small_talk (intent name, or None), ai_declined (the model said the matched FAQ does not answer the question).
     """
     row, score = find_best_faq(index, query)
     result = {
@@ -89,6 +147,8 @@ def answer(index: FaqIndex, query: str, client=None, model=DEFAULT_MODEL, thresh
         "used_ai": False,
         "error": None,
         "small_talk": None,
+        "ai_declined": False,
+        "off_topic": None,
     }
 
     if score < threshold:  # nothing matches well
@@ -96,10 +156,8 @@ def answer(index: FaqIndex, query: str, client=None, model=DEFAULT_MODEL, thresh
         if chat:  # greeting, thanks, "who are you"...: friendly fixed reply
             result["small_talk"], result["reply"] = chat
             return result
-        # otherwise hand over to a human, no AI call
-        result["reply"] = ESCALATION
-        result["escalated"] = True
-        return result
+        # otherwise: polite redirect if off-topic, else hand over to a human (no AI call)
+        return no_answer(result, query)
 
     if client is None:  # no API key: show the plain FAQ answer
         result["reply"] = row["answer"]
@@ -117,8 +175,14 @@ def answer(index: FaqIndex, query: str, client=None, model=DEFAULT_MODEL, thresh
         text = (response.choices[0].message.content or "").strip()
         if not text:
             raise ValueError("The model returned an empty reply.")
-        result["reply"] = text
         result["used_ai"] = True
+        if model_declined(text):
+            # The model judged that the matched FAQ does not answer this question,
+            # so treat it exactly like a weak match: clean hand-over message.
+            result["ai_declined"] = True
+            no_answer(result, query)
+        else:
+            result["reply"] = text
     except Exception as exc:  # e.g. retired model, bad key, network problem
         result["reply"] = row["answer"]  # fall back to the approved FAQ text
         result["error"] = f"{type(exc).__name__}: {exc}"

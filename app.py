@@ -90,7 +90,7 @@ if "messages" not in st.session_state:
 
 def suggestions(meta):
     """Follow-up questions to offer as quick replies."""
-    if meta and not meta["escalated"] and not meta["small_talk"]:
+    if meta and not meta["escalated"] and not meta["small_talk"] and not meta["off_topic"]:
         faqs = index.faqs
         same = faqs[(faqs["category"] == meta["category"]) & (faqs["faq_id"] != meta["faq_id"])]
         questions = same["question"].head(3).tolist()
@@ -145,6 +145,12 @@ with st.expander("Browse the FAQ knowledge base"):
 
 
 def render_details(meta):
+    if meta["off_topic"]:
+        st.caption("This is outside Saathi's job (shopping help), so no FAQ was used.")
+        with st.expander("How Saathi answered"):
+            st.write(f"**Type of question:** off topic ({meta['off_topic']})")
+            st.write("Saathi only helps with ShopSaathi orders, delivery, returns, payments and offers.")
+        return
     if meta["small_talk"]:
         st.caption("Friendly chit-chat, so no FAQ was needed for this reply.")
         with st.expander("How Saathi answered"):
@@ -173,7 +179,7 @@ def render(i, message, is_last):
         st.write(message["content"])
         meta = message.get("meta")
         if meta:
-            if not meta["escalated"] and not meta["small_talk"]:
+            if not (meta["escalated"] or meta["small_talk"] or meta["off_topic"]):
                 st.feedback("thumbs", key=f"feedback_{i}")
             render_details(meta)
     if message["role"] != "assistant" or not is_last:
