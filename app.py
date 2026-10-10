@@ -90,7 +90,7 @@ if "messages" not in st.session_state:
 
 def suggestions(meta):
     """Follow-up questions to offer as quick replies."""
-    if meta and not meta["escalated"]:
+    if meta and not meta["escalated"] and not meta["small_talk"]:
         faqs = index.faqs
         same = faqs[(faqs["category"] == meta["category"]) & (faqs["faq_id"] != meta["faq_id"])]
         questions = same["question"].head(3).tolist()
@@ -145,6 +145,13 @@ with st.expander("Browse the FAQ knowledge base"):
 
 
 def render_details(meta):
+    if meta["small_talk"]:
+        st.caption("Friendly chit-chat, so no FAQ was needed for this reply.")
+        with st.expander("How Saathi answered"):
+            st.write(f"**Type of message:** {meta['small_talk'].replace('_', ' ')}")
+            st.write(f"**Best FAQ match score:** {meta['score']:.4f} "
+                     f"(below {saathi.THRESHOLD}, so no FAQ answer was used)")
+        return
     if meta["escalated"]:
         st.caption("No FAQ matched well, so this question is handed to a human agent.")
     if meta["error"]:
@@ -164,7 +171,7 @@ def render(i, message, is_last):
         st.write(message["content"])
         meta = message.get("meta")
         if meta:
-            if not meta["escalated"]:
+            if not meta["escalated"] and not meta["small_talk"]:
                 st.feedback("thumbs", key=f"feedback_{i}")
             render_details(meta)
     if message["role"] != "assistant" or not is_last:

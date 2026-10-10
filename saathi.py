@@ -3,6 +3,7 @@
 Steps: find the best FAQ -> escalate if the match is weak -> otherwise let a
 Groq-hosted model rewrite the FAQ answer in a warm tone, using only that text.
 """
+import re
 from dataclasses import dataclass
 
 import pandas as pd
@@ -12,6 +13,33 @@ from sklearn.metrics.pairwise import cosine_similarity
 DEFAULT_MODEL = "openai/gpt-oss-20b"
 THRESHOLD = 0.12
 ESCALATION = "Sorry, I'm not sure about that. Let me connect you to a support agent."
+
+# Friendly replies for chit-chat. They are fixed text, so nothing can be made up.
+# They are only used when no FAQ matches well, so real store questions always win.
+SMALL_TALK = [
+    ("greeting", r"\b(hi+|hello+|hey+|hiya|namaste|namaskar|good (morning|afternoon|evening))\b",
+     "Hi there! 👋 I'm Saathi. Ask me about orders, delivery, returns, payments or offers."),
+    ("identity", r"\b(your name|who are you|what are you|who (made|built|created) you|are you (a |an )?(bot|robot|human|real|ai|person))\b",
+     "I'm Saathi, ShopSaathi's FAQ chatbot. I'm an AI assistant, not a person, and I answer from the store's FAQs."),
+    ("how_are_you", r"\b(how are you|how r u|how do you do|how'?s it going)\b",
+     "I'm doing great, thanks for asking! 😊 How can I help with your ShopSaathi order today?"),
+    ("capabilities", r"\b(what can you do|what do you know|how can you help|can you help( me)?|help me|i need help)\b|^\s*help\s*[.!?]*\s*$",
+     "I can help with tracking orders, delivery charges and times, returns and refunds, payments and EMI, coupons and gift cards. What would you like to know?"),
+    ("thanks", r"\b(thanks+|thank you|thankyou|thx|ty)\b",
+     "You're welcome! 😊 Is there anything else I can help you with?"),
+    ("bye", r"\b(bye+|goodbye|see you|see ya|take care)\b",
+     "Bye for now! 👋 Come back any time you have a question."),
+]
+
+
+def small_talk(query: str):
+    """Return (intent, reply) for greetings and similar chit-chat, or None."""
+    text = query.lower().strip()
+    for intent, pattern, reply in SMALL_TALK:
+        if re.search(pattern, text):
+            return intent, reply
+    return None
+
 
 SYSTEM_PROMPT = """Role: You are ShopSaathi's warm and friendly customer support assistant.
 Task: Answer the customer's query using only the provided FAQ answer context.
@@ -47,7 +75,7 @@ def answer(index: FaqIndex, query: str, client=None, model=DEFAULT_MODEL, thresh
     """Answer one customer question.
 
     Returns a dict with: reply, faq_id, category, matched_question, raw_answer,
-    score, escalated, used_ai, error.
+    score, escalated, used_ai, error, small_talk (intent name, or None).
     """
     row, score = find_best_faq(index, query)
     result = {
@@ -60,9 +88,15 @@ def answer(index: FaqIndex, query: str, client=None, model=DEFAULT_MODEL, thresh
         "escalated": False,
         "used_ai": False,
         "error": None,
+        "small_talk": None,
     }
 
-    if score < threshold:  # nothing matches well: hand over to a human, no AI call
+    if score < threshold:  # nothing matches well
+        chat = small_talk(query)
+        if chat:  # greeting, thanks, "who are you"...: friendly fixed reply
+            result["small_talk"], result["reply"] = chat
+            return result
+        # otherwise hand over to a human, no AI call
         result["reply"] = ESCALATION
         result["escalated"] = True
         return result
