@@ -152,7 +152,9 @@ def render_details(meta):
             st.write(f"**Best FAQ match score:** {meta['score']:.4f} "
                      f"(below {saathi.THRESHOLD}, so no FAQ answer was used)")
         return
-    if meta["escalated"]:
+    if meta["ai_declined"]:
+        st.caption("The closest FAQ does not answer this question, so it is handed to a human agent.")
+    elif meta["escalated"]:
         st.caption("No FAQ matched well, so this question is handed to a human agent.")
     if meta["error"]:
         st.warning("The AI reply failed, so the approved FAQ text is shown instead.")
