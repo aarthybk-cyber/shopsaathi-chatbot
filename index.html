@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShopSaathi | Ask Saathi</title>
+<meta name="description" content="ShopSaathi is a demo store. Saathi, its FAQ chatbot, answers questions about delivery, returns and payments.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1E1A5C;
+    --violet: #4F46E5;
+    --marigold: #FFB320;
+    --paper: #FAF9FF;
+    --line: #D9D6F2;
+    --muted: #57548C;
+    --chilli: #D93A3F;
+    --leaf: #1F9D6B;
+    --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--font); font-size: 1.0625rem; line-height: 1.55;
+    font-variation-settings: "opsz" 14;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-variation-settings: "opsz" 96; line-height: 1.04; letter-spacing: -0.025em; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; }
+  .wrap { width: min(1160px, 100% - 32px); margin-inline: auto; }
+  :focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; border-radius: 6px; }
+
+  /* announcement bar */
+  .bar { background: var(--ink); color: #fff; font-size: .9rem; }
+  .bar .wrap { display: flex; flex-wrap: wrap; gap: 4px 20px; justify-content: center; padding: 9px 0; text-align: center; }
+  .bar b { color: var(--marigold); font-weight: 650; }
+
+  /* header */
+  header .wrap { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; gap: 16px; }
+  .brand { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.04em; text-decoration: none; font-variation-settings: "opsz" 48; }
+  .brand i { font-style: normal; color: var(--violet); }
+  .brand::after { content: ""; display: inline-block; width: .32em; height: .32em; margin-left: .08em; border-radius: 50%; background: var(--marigold); }
+  nav { display: flex; align-items: center; gap: 28px; }
+  nav a.link { text-decoration: none; font-weight: 500; color: var(--muted); }
+  nav a.link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; text-decoration-color: var(--marigold); }
+  .btn {
+    font: inherit; font-weight: 650; cursor: pointer; border: 2px solid var(--ink); background: var(--ink); color: #fff;
+    padding: 12px 22px; border-radius: 999px; text-decoration: none; display: inline-block; line-height: 1.2;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn:hover { background: var(--violet); border-color: var(--violet); transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.ghost:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn.gold { background: var(--marigold); border-color: var(--marigold); color: var(--ink); }
+  .btn.gold:hover { background: #ffc24d; border-color: #ffc24d; }
+
+  /* hero */
+  .hero { padding: 20px 0 48px; }
+  .hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: 48px; align-items: center; }
+  .hero h1 { font-size: clamp(2rem, min(4vw, 6.4vh), 3.5rem); font-weight: 800; max-width: 14ch; }
+  .hero .lede { margin-top: 16px; font-size: clamp(1rem, 1.4vw, 1.12rem); max-width: 34em; color: var(--muted); }
+  .hero .actions { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }
+  .hero .fine { margin-top: 18px; max-width: 34em; font-size: .95rem; color: var(--muted); }
+
+  .stage { position: relative; }
+  .shadowed { position: relative; }
+  .shadowed::before {  /* the one loud element: a hard marigold offset behind the live chat */
+    content: ""; position: absolute; inset: 0; transform: translate(16px, 16px);
+    background: var(--marigold); border-radius: 26px; border: 2px solid var(--ink);
+  }
+  .frame {
+    position: relative; height: clamp(460px, calc(100vh - 210px), 720px); height: clamp(460px, calc(100dvh - 210px), 720px); background: #fff;
+    border: 2px solid var(--ink); border-radius: 26px; overflow: hidden;
+  }
+  .frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .poster {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 32px; gap: 14px; background: #fff;
+  }
+  .poster .avatar {
+    width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED); font-size: 2.2rem;
+  }
+  .poster h2 { font-size: 1.9rem; }
+  .poster p { color: var(--muted); max-width: 26em; font-size: 1rem; }
+  .poster .live { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
+  .poster .live::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--leaf); }
+  .poster .note { font-size: .88rem; }
+  .poster .alert { color: var(--chilli); font-weight: 600; }
+  .stage-foot { margin-top: 34px; font-size: .9rem; color: var(--muted); }
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .stage { animation: rise .7s cubic-bezier(.2, .8, .2, 1) both; }
+    .shadowed::before { animation: slide .9s .25s cubic-bezier(.2, .8, .2, 1) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(24px); } }
+    @keyframes slide { from { transform: translate(0, 0); } }
+  }
+
+  /* departments index */
+  section.block { padding: 72px 0; border-top: 2px solid var(--ink); }
+  .block-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 40px; margin-bottom: 36px; }
+  .block-head h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; }
+  .block-head p { color: var(--muted); align-self: end; max-width: 34em; }
+  .index { list-style: none; margin: 0; padding: 0; }
+  .index li {
+    position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: baseline;
+    padding: 22px 0 22px 20px; border-top: 1px solid var(--line);
+  }
+  .index li:last-child { border-bottom: 1px solid var(--line); }
+  .index li::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: var(--marigold);
+    transform: scaleY(0); transform-origin: top; transition: transform .2s ease;
+  }
+  .index li:hover::before { transform: scaleY(1); }
+  .index h3 { font-size: clamp(1.6rem, 3.2vw, 2.5rem); font-weight: 700; transition: color .2s; }
+  .index li:hover h3 { color: var(--violet); }
+  .index p { color: var(--muted); }
+
+  /* topics and steps */
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 72px; }
+  .two h2 { font-size: clamp(1.8rem, 3.4vw, 2.5rem); font-weight: 800; margin-bottom: 10px; }
+  .two .sub { color: var(--muted); margin-bottom: 28px; max-width: 30em; }
+  .topics { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .topics li { display: grid; grid-template-columns: 11.5em minmax(0, 1fr) 2em; gap: 14px; align-items: center; font-size: .98rem; }
+  .topics .bar-track { height: 12px; background: #ECEAFB; border-radius: 99px; overflow: hidden; }
+  .topics .bar-fill { display: block; height: 100%; background: var(--violet); border-radius: 99px; }
+  .topics .n { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; gap: 28px; }
+  .steps li { position: relative; padding-left: 62px; counter-increment: step; }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 0; width: 42px; height: 42px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--ink); color: var(--marigold); font-weight: 800; font-size: 1.15rem;
+  }
+  .steps li:not(:last-child)::after { content: ""; position: absolute; left: 20px; top: 48px; bottom: -22px; width: 2px; background: var(--line); }
+  .steps h3 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.015em; margin-bottom: 4px; }
+  .steps p { color: var(--muted); max-width: 30em; }
+
+  footer { background: var(--ink); color: #D8D6F6; padding: 44px 0 48px; }
+  footer .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
+  footer .brand { color: #fff; font-size: 1.4rem; }
+  footer .brand i { color: var(--marigold); }
+  footer p { font-size: .95rem; max-width: 36em; }
+  footer p + p { margin-top: 10px; }
+  footer strong { color: #fff; font-weight: 650; }
+
+  @media (max-width: 900px) {
+    .hero { padding-bottom: 64px; }
+    .hero .wrap { grid-template-columns: 1fr; gap: 56px; }
+    .stage { margin-right: 16px; }
+    .block-head, .two, footer .wrap { grid-template-columns: 1fr; gap: 28px; }
+    .two { gap: 56px; }
+    .index li { grid-template-columns: 1fr; gap: 4px; }
+    nav a.link { display: none; }
+    section.block { padding: 56px 0; }
+  }
+  @media (max-width: 480px) {
+    .topics li { grid-template-columns: 9.5em minmax(0, 1fr) 1.8em; font-size: .92rem; }
+    .frame { height: clamp(480px, 74dvh, 620px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="wrap">
+    <span><b>Diwali Dhamaka:</b> up to 60% off, dates announced on the home page</span>
+    <span>New here? Use code <b>SAATHI10</b> for 10% off your first order (up to Rs.500, minimum Rs.999)</span>
+  </div>
+</div>
+
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="ShopSaathi home">Shop<i>Saathi</i></a>
+    <nav aria-label="Main">
+      <a class="link" href="#departments">Departments</a>
+      <a class="link" href="#help">What Saathi knows</a>
+      <a class="link" href="#how">How it works</a>
+      <button class="btn gold" type="button" data-start>Ask Saathi</button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Questions about your order? Ask Saathi.</h1>
+        <p class="lede">Saathi is ShopSaathi's helper. It reads the store's FAQs, replies in plain words, and passes you to a person when it isn't sure.</p>
+        <div class="actions">
+          <button class="btn" type="button" data-start>Start chatting</button>
+          <a class="btn ghost" href="#help">See what Saathi knows</a>
+        </div>
+        <p class="fine">Try asking about delivery charges, returns, Cash on Delivery, EMI or gift cards.</p>
+      </div>
+
+      <div class="stage">
+        <div class="shadowed"><div class="frame" id="frame">
+          <div class="poster" id="poster">
+            <div class="avatar" aria-hidden="true">🛍️</div>
+            <h2>Saathi is ready</h2>
+            <p>Ask a question the way you would ask a shop assistant. Saathi answers from ShopSaathi's FAQs.</p>
+            <span class="live">Online</span>
+            <button class="btn" type="button" data-start id="startBtn">Start chatting</button>
+            <p class="note" id="note">The chat runs on a free server, so the first load can take up to a minute.</p>
+          </div>
+        </div></div>
+        <p class="stage-foot" id="stageFoot">This is the real chatbot, not a mock-up. <a id="newTab" href="#" target="_blank" rel="noopener">Open it in a new tab</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="departments">
+    <div class="wrap">
+      <div class="block-head">
+        <h2>Shop by department</h2>
+        <p>Every department follows the same store rules, and Saathi knows them all.</p>
+      </div>
+      <ul class="index">
+        <li><h3>Fashion</h3><p>Exchange for a different size within 7 days, subject to stock.</p></li>
+        <li><h3>Electronics</h3><p>At least 1 year of manufacturer warranty, listed on each product page.</p></li>
+        <li><h3>Home and kitchen</h3><p>Free delivery on orders above Rs.499, or Rs.49 below that.</p></li>
+        <li><h3>Beauty and personal care</h3><p>Genuine products from authorised sellers. Hygiene items cannot be returned.</p></li>
+        <li><h3>Gift cards</h3><p>E-gift cards from Rs.500 to Rs.10,000, emailed to the person you choose.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block" id="help">
+    <div class="wrap two">
+      <div>
+        <h2>What Saathi knows</h2>
+        <p class="sub">50 answers across 10 topics. Anything outside them goes to a human agent.</p>
+        <ul class="topics" id="topics"></ul>
+      </div>
+      <div id="how">
+        <h2>How Saathi answers</h2>
+        <p class="sub">Saathi never makes up an answer. Each reply follows the same three steps.</p>
+        <ol class="steps">
+          <li><h3>Finds the closest FAQ</h3><p>Your question is compared with all 50 FAQs, and the best match wins.</p></li>
+          <li><h3>Checks the match</h3><p>If nothing is close enough, Saathi says so instead of guessing.</p></li>
+          <li><h3>Replies or hands over</h3><p>A close match is reworded in a friendly voice. Otherwise you can ask for a human agent.</p></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <a class="brand" href="#top">Shop<i>Saathi</i></a>
+    </div>
+    <div>
+      <p><strong>Support hours:</strong> 9 AM to 9 PM IST, 7 days a week.</p>
+      <p>ShopSaathi is a fictional store built for a course project on generative AI chatbots. Nothing here can be bought. Your chat messages are sent to an AI service, so please don't type personal details.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // 1) Paste your Streamlit app link here (the address of your deployed app).
+  const CHATBOT_URL = "https://shopsaathi-chatbot-ugyzjgkxzm7rqgwggap7tk.streamlit.app";
+
+  const configured = !/YOUR-APP-NAME/.test(CHATBOT_URL);
+  const embedUrl = CHATBOT_URL + (CHATBOT_URL.includes("?") ? "&" : "?") + "embed=true&view=widget";
+  const frame = document.getElementById("frame");
+  const poster = document.getElementById("poster");
+  const note = document.getElementById("note");
+  const newTab = document.getElementById("newTab");
+  newTab.href = configured ? CHATBOT_URL : "#";
+  let started = false;
+
+  function startChat() {
+    if (!configured) {
+      note.textContent = "The chatbot link is not set yet. Open index.html and replace YOUR-APP-NAME in CHATBOT_URL with your app's address.";
+      note.className = "note alert";
+      return;
+    }
+    if (!started) {
+      started = true;
+      note.textContent = "Waking Saathi up...";
+      const f = document.createElement("iframe");
+      f.src = embedUrl;
+      f.title = "Saathi, the ShopSaathi FAQ chatbot";
+      f.allow = "clipboard-write";
+      f.addEventListener("load", () => { poster.hidden = true; });
+      frame.appendChild(f);
+    }
+    if (window.matchMedia("(max-width: 900px)").matches) frame.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  document.querySelectorAll("[data-start]").forEach(b => b.addEventListener("click", startChat));
+
+  // 2) Topic list: how many FAQs the knowledge base has per category.
+  const topics = [
+    ["Returns & Refunds", 7], ["Offers & Loyalty", 6], ["Orders & Tracking", 6], ["Support & General", 6],
+    ["Shipping & Delivery", 5], ["Payments & EMI", 5], ["Products & Stock", 5], ["Account & Profile", 4],
+    ["Cancellations", 3], ["Warranty & Repairs", 3]
+  ];
+  const max = Math.max(...topics.map(t => t[1]));
+  document.getElementById("topics").innerHTML = topics.map(([name, n]) =>
+    `<li><span>${name.replace("&", "&amp;")}</span><span class="bar-track"><span class="bar-fill" style="width:${(n / max) * 100}%"></span></span><span class="n">${n}</span></li>`
+  ).join("");
+</script>
+</body>
+</html>
