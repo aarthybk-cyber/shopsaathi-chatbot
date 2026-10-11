@@ -16,7 +16,7 @@ Saathi is a small FAQ chatbot for a fictional Indian online store, **ShopSaathi*
 | `.streamlit/config.toml` | App theme colour (safe to commit; never put keys here) |
 | `saathi.py` | The chatbot logic used by the app: search, hand-over rule, Groq reply |
 | `ShopSaathi_Chatbot.ipynb` | The same chatbot as a notebook (runs in Google Colab or Jupyter) |
-| `data/shopsaathi_faqs.csv` | The knowledge base: 48 FAQs, 10 categories, columns `faq_id, category, question, answer, keywords` |
+| `data/shopsaathi_faqs.csv` | The knowledge base: 50 FAQs, 10 categories, columns `faq_id, category, question, answer, keywords` |
 | `requirements.txt` | Python packages: `groq`, `pandas`, `scikit-learn`, `streamlit` |
 
 ## Run the notebook
@@ -101,4 +101,4 @@ faqs, vectorizer, faq_vectors = build_index()
 - **Keyword matching:** the search compares shared words, so heavy typos or slang can match the wrong FAQ. Embedding-based search would handle meaning better.
 - **Model names change:** Groq retires models over time. If you see a "decommissioned" error, run `client.models.list()` and update `MODEL` in the settings cell.
 - **Privacy:** customer messages are sent to a third-party AI service. Do not send personal data (phone numbers, order details) without masking it.
-- The FAQ content is example data for a fictional store (FAQ047, the gift cards entry, and FAQ048, what the store sells, were written as examples).
+- The FAQ content is example data for a fictional store (FAQ047 to FAQ050 (gift cards, what the store sells, how to order online, physical store) were written as examples).

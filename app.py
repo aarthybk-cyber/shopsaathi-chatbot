@@ -49,6 +49,27 @@ st.markdown(
 )
 
 
+# When the landing page embeds the app it adds ?view=widget, which switches on a compact layout.
+# (Streamlit hides its own "embed" parameter from the app, so we use our own.)
+EMBED = str(st.query_params.get("view", "")).lower() == "widget"
+if EMBED:
+    st.markdown(
+        """
+        <style>
+        html {font-size: 14.5px;}
+        .block-container {padding-top: 3.2rem !important; padding-bottom: 1rem !important;}
+        .bot-header {padding: 9px 14px; margin-bottom: 8px; border-radius: 14px; gap: 11px;}
+        .bot-avatar {width: 36px; height: 36px; font-size: 20px;}
+        .bot-name {font-size: 1.1rem;}
+        .bot-status {font-size: .78rem;}
+        [data-testid="stChatMessage"] {padding: .5rem .75rem;}
+        div.stButton > button {padding: .3rem .8rem; min-height: 0;}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def secret(name, default=None):
     """Read a setting from Streamlit secrets, then the environment."""
     try:
@@ -137,35 +158,35 @@ st.markdown(
 )
 
 
-with st.expander("Browse the FAQ knowledge base"):
-    categories = sorted(index.faqs["category"].unique())
-    chosen = st.multiselect("Filter by category", categories)
-    table = index.faqs if not chosen else index.faqs[index.faqs["category"].isin(chosen)]
-    st.dataframe(table[["faq_id", "category", "question", "answer"]], hide_index=True, width="stretch")
+if not EMBED:
+    with st.expander("Browse the FAQ knowledge base"):
+        categories = sorted(index.faqs["category"].unique())
+        chosen = st.multiselect("Filter by category", categories)
+        table = index.faqs if not chosen else index.faqs[index.faqs["category"].isin(chosen)]
+        st.dataframe(table[["faq_id", "category", "question", "answer"]], hide_index=True, width="stretch")
 
 
 def render_details(meta):
     if meta["off_topic"]:
-        st.caption("This is outside Saathi's job (shopping help), so no FAQ was used.")
         with st.expander("How Saathi answered"):
             st.write(f"**Type of question:** off topic ({meta['off_topic']})")
             st.write("Saathi only helps with ShopSaathi orders, delivery, returns, payments and offers.")
         return
     if meta["small_talk"]:
-        st.caption("Friendly chit-chat, so no FAQ was needed for this reply.")
         with st.expander("How Saathi answered"):
             st.write(f"**Type of message:** {meta['small_talk'].replace('_', ' ')}")
             st.write(f"**Best FAQ match score:** {meta['score']:.4f} "
                      f"(below {saathi.THRESHOLD}, so no FAQ answer was used)")
         return
-    if meta["ai_declined"]:
-        st.caption("The closest FAQ does not answer this question, so it is handed to a human agent.")
-    elif meta["escalated"]:
-        st.caption("No FAQ matched well, so this question is handed to a human agent.")
     if meta["error"]:
         st.warning("The AI reply failed, so the approved FAQ text is shown instead.")
     with st.expander("How Saathi answered"):
-        st.write(f"**Matched FAQ:** {meta['faq_id']} ({meta['category']})")
+        if meta["ai_declined"]:
+            st.write("**Why a human agent:** the closest FAQ does not answer this question.")
+        elif meta["escalated"]:
+            st.write("**Why a human agent:** no FAQ matched this question well enough.")
+        st.write(f"**Closest FAQ:** {meta['faq_id']} ({meta['category']})" if meta["escalated"]
+                 else f"**Matched FAQ:** {meta['faq_id']} ({meta['category']})")
         st.write(f"**Matched question:** {meta['matched_question']}")
         st.write(f"**Match score:** {meta['score']:.4f} (hand-over below {saathi.THRESHOLD})")
         st.write(f"**Raw FAQ answer:** {meta['raw_answer']}")
@@ -196,7 +217,7 @@ def render(i, message, is_last):
             })
             st.rerun()
     st.caption("Quick replies" if i else "Try asking")
-    options = EXAMPLES if i == 0 else suggestions(meta)
+    options = (EXAMPLES[:3] if EMBED else EXAMPLES) if i == 0 else suggestions(meta)
     for n, question in enumerate(options):
         if st.button(question, key=f"chip_{i}_{n}"):
             st.session_state.pending = question
